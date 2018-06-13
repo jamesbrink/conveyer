@@ -1,0 +1,1307 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 9.6.3
+-- Dumped by pg_dump version 9.6.6
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
+SET search_path = public, pg_catalog;
+
+--
+-- Name: guacamole_connection_group_type; Type: TYPE; Schema: public; Owner: guac
+--
+
+CREATE TYPE guacamole_connection_group_type AS ENUM (
+    'ORGANIZATIONAL',
+    'BALANCING'
+);
+
+
+ALTER TYPE guacamole_connection_group_type OWNER TO guac;
+
+--
+-- Name: guacamole_object_permission_type; Type: TYPE; Schema: public; Owner: guac
+--
+
+CREATE TYPE guacamole_object_permission_type AS ENUM (
+    'READ',
+    'UPDATE',
+    'DELETE',
+    'ADMINISTER'
+);
+
+
+ALTER TYPE guacamole_object_permission_type OWNER TO guac;
+
+--
+-- Name: guacamole_proxy_encryption_method; Type: TYPE; Schema: public; Owner: guac
+--
+
+CREATE TYPE guacamole_proxy_encryption_method AS ENUM (
+    'NONE',
+    'SSL'
+);
+
+
+ALTER TYPE guacamole_proxy_encryption_method OWNER TO guac;
+
+--
+-- Name: guacamole_system_permission_type; Type: TYPE; Schema: public; Owner: guac
+--
+
+CREATE TYPE guacamole_system_permission_type AS ENUM (
+    'CREATE_CONNECTION',
+    'CREATE_CONNECTION_GROUP',
+    'CREATE_SHARING_PROFILE',
+    'CREATE_USER',
+    'ADMINISTER'
+);
+
+
+ALTER TYPE guacamole_system_permission_type OWNER TO guac;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: guacamole_connection; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_connection (
+    connection_id integer NOT NULL,
+    connection_name character varying(128) NOT NULL,
+    parent_id integer,
+    protocol character varying(32) NOT NULL,
+    max_connections integer,
+    max_connections_per_user integer,
+    proxy_port integer,
+    proxy_hostname character varying(512),
+    proxy_encryption_method guacamole_proxy_encryption_method
+);
+
+
+ALTER TABLE guacamole_connection OWNER TO guac;
+
+--
+-- Name: guacamole_connection_connection_id_seq; Type: SEQUENCE; Schema: public; Owner: guac
+--
+
+CREATE SEQUENCE guacamole_connection_connection_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE guacamole_connection_connection_id_seq OWNER TO guac;
+
+--
+-- Name: guacamole_connection_connection_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: guac
+--
+
+ALTER SEQUENCE guacamole_connection_connection_id_seq OWNED BY guacamole_connection.connection_id;
+
+
+--
+-- Name: guacamole_connection_group; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_connection_group (
+    connection_group_id integer NOT NULL,
+    parent_id integer,
+    connection_group_name character varying(128) NOT NULL,
+    type guacamole_connection_group_type DEFAULT 'ORGANIZATIONAL'::guacamole_connection_group_type NOT NULL,
+    max_connections integer,
+    max_connections_per_user integer,
+    enable_session_affinity boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE guacamole_connection_group OWNER TO guac;
+
+--
+-- Name: guacamole_connection_group_connection_group_id_seq; Type: SEQUENCE; Schema: public; Owner: guac
+--
+
+CREATE SEQUENCE guacamole_connection_group_connection_group_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE guacamole_connection_group_connection_group_id_seq OWNER TO guac;
+
+--
+-- Name: guacamole_connection_group_connection_group_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: guac
+--
+
+ALTER SEQUENCE guacamole_connection_group_connection_group_id_seq OWNED BY guacamole_connection_group.connection_group_id;
+
+
+--
+-- Name: guacamole_connection_group_permission; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_connection_group_permission (
+    user_id integer NOT NULL,
+    connection_group_id integer NOT NULL,
+    permission guacamole_object_permission_type NOT NULL
+);
+
+
+ALTER TABLE guacamole_connection_group_permission OWNER TO guac;
+
+--
+-- Name: guacamole_connection_history; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_connection_history (
+    history_id integer NOT NULL,
+    user_id integer,
+    username character varying(128) NOT NULL,
+    connection_id integer,
+    connection_name character varying(128) NOT NULL,
+    sharing_profile_id integer,
+    sharing_profile_name character varying(128) DEFAULT NULL::character varying,
+    start_date timestamp with time zone NOT NULL,
+    end_date timestamp with time zone
+);
+
+
+ALTER TABLE guacamole_connection_history OWNER TO guac;
+
+--
+-- Name: guacamole_connection_history_history_id_seq; Type: SEQUENCE; Schema: public; Owner: guac
+--
+
+CREATE SEQUENCE guacamole_connection_history_history_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE guacamole_connection_history_history_id_seq OWNER TO guac;
+
+--
+-- Name: guacamole_connection_history_history_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: guac
+--
+
+ALTER SEQUENCE guacamole_connection_history_history_id_seq OWNED BY guacamole_connection_history.history_id;
+
+
+--
+-- Name: guacamole_connection_parameter; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_connection_parameter (
+    connection_id integer NOT NULL,
+    parameter_name character varying(128) NOT NULL,
+    parameter_value character varying(4096) NOT NULL
+);
+
+
+ALTER TABLE guacamole_connection_parameter OWNER TO guac;
+
+--
+-- Name: guacamole_connection_permission; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_connection_permission (
+    user_id integer NOT NULL,
+    connection_id integer NOT NULL,
+    permission guacamole_object_permission_type NOT NULL
+);
+
+
+ALTER TABLE guacamole_connection_permission OWNER TO guac;
+
+--
+-- Name: guacamole_sharing_profile; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_sharing_profile (
+    sharing_profile_id integer NOT NULL,
+    sharing_profile_name character varying(128) NOT NULL,
+    primary_connection_id integer NOT NULL
+);
+
+
+ALTER TABLE guacamole_sharing_profile OWNER TO guac;
+
+--
+-- Name: guacamole_sharing_profile_parameter; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_sharing_profile_parameter (
+    sharing_profile_id integer NOT NULL,
+    parameter_name character varying(128) NOT NULL,
+    parameter_value character varying(4096) NOT NULL
+);
+
+
+ALTER TABLE guacamole_sharing_profile_parameter OWNER TO guac;
+
+--
+-- Name: guacamole_sharing_profile_permission; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_sharing_profile_permission (
+    user_id integer NOT NULL,
+    sharing_profile_id integer NOT NULL,
+    permission guacamole_object_permission_type NOT NULL
+);
+
+
+ALTER TABLE guacamole_sharing_profile_permission OWNER TO guac;
+
+--
+-- Name: guacamole_sharing_profile_sharing_profile_id_seq; Type: SEQUENCE; Schema: public; Owner: guac
+--
+
+CREATE SEQUENCE guacamole_sharing_profile_sharing_profile_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE guacamole_sharing_profile_sharing_profile_id_seq OWNER TO guac;
+
+--
+-- Name: guacamole_sharing_profile_sharing_profile_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: guac
+--
+
+ALTER SEQUENCE guacamole_sharing_profile_sharing_profile_id_seq OWNED BY guacamole_sharing_profile.sharing_profile_id;
+
+
+--
+-- Name: guacamole_system_permission; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_system_permission (
+    user_id integer NOT NULL,
+    permission guacamole_system_permission_type NOT NULL
+);
+
+
+ALTER TABLE guacamole_system_permission OWNER TO guac;
+
+--
+-- Name: guacamole_user; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_user (
+    user_id integer NOT NULL,
+    username character varying(128) NOT NULL,
+    password_hash bytea NOT NULL,
+    password_salt bytea,
+    password_date timestamp with time zone NOT NULL,
+    disabled boolean DEFAULT false NOT NULL,
+    expired boolean DEFAULT false NOT NULL,
+    access_window_start time without time zone,
+    access_window_end time without time zone,
+    valid_from date,
+    valid_until date,
+    timezone character varying(64),
+    full_name character varying(256),
+    email_address character varying(256),
+    organization character varying(256),
+    organizational_role character varying(256)
+);
+
+
+ALTER TABLE guacamole_user OWNER TO guac;
+
+--
+-- Name: guacamole_user_password_history; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_user_password_history (
+    password_history_id integer NOT NULL,
+    user_id integer NOT NULL,
+    password_hash bytea NOT NULL,
+    password_salt bytea,
+    password_date timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE guacamole_user_password_history OWNER TO guac;
+
+--
+-- Name: guacamole_user_password_history_password_history_id_seq; Type: SEQUENCE; Schema: public; Owner: guac
+--
+
+CREATE SEQUENCE guacamole_user_password_history_password_history_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE guacamole_user_password_history_password_history_id_seq OWNER TO guac;
+
+--
+-- Name: guacamole_user_password_history_password_history_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: guac
+--
+
+ALTER SEQUENCE guacamole_user_password_history_password_history_id_seq OWNED BY guacamole_user_password_history.password_history_id;
+
+
+--
+-- Name: guacamole_user_permission; Type: TABLE; Schema: public; Owner: guac
+--
+
+CREATE TABLE guacamole_user_permission (
+    user_id integer NOT NULL,
+    affected_user_id integer NOT NULL,
+    permission guacamole_object_permission_type NOT NULL
+);
+
+
+ALTER TABLE guacamole_user_permission OWNER TO guac;
+
+--
+-- Name: guacamole_user_user_id_seq; Type: SEQUENCE; Schema: public; Owner: guac
+--
+
+CREATE SEQUENCE guacamole_user_user_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE guacamole_user_user_id_seq OWNER TO guac;
+
+--
+-- Name: guacamole_user_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: guac
+--
+
+ALTER SEQUENCE guacamole_user_user_id_seq OWNED BY guacamole_user.user_id;
+
+
+--
+-- Name: guacamole_connection connection_id; Type: DEFAULT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection ALTER COLUMN connection_id SET DEFAULT nextval('guacamole_connection_connection_id_seq'::regclass);
+
+
+--
+-- Name: guacamole_connection_group connection_group_id; Type: DEFAULT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_group ALTER COLUMN connection_group_id SET DEFAULT nextval('guacamole_connection_group_connection_group_id_seq'::regclass);
+
+
+--
+-- Name: guacamole_connection_history history_id; Type: DEFAULT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_history ALTER COLUMN history_id SET DEFAULT nextval('guacamole_connection_history_history_id_seq'::regclass);
+
+
+--
+-- Name: guacamole_sharing_profile sharing_profile_id; Type: DEFAULT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile ALTER COLUMN sharing_profile_id SET DEFAULT nextval('guacamole_sharing_profile_sharing_profile_id_seq'::regclass);
+
+
+--
+-- Name: guacamole_user user_id; Type: DEFAULT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user ALTER COLUMN user_id SET DEFAULT nextval('guacamole_user_user_id_seq'::regclass);
+
+
+--
+-- Name: guacamole_user_password_history password_history_id; Type: DEFAULT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user_password_history ALTER COLUMN password_history_id SET DEFAULT nextval('guacamole_user_password_history_password_history_id_seq'::regclass);
+
+
+--
+-- Data for Name: guacamole_connection; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_connection (connection_id, connection_name, parent_id, protocol, max_connections, max_connections_per_user, proxy_port, proxy_hostname, proxy_encryption_method) FROM stdin;
+1	Nexus_5X_API_27	1	vnc	100	100	\N	\N	NONE
+4	Nexus_5X_API_27_RO	1	vnc	100	100	\N	\N	NONE
+5	Nexus_5X_API_24	1	vnc	100	100	\N	\N	NONE
+6	Nexus_5X_API_24_RO	1	vnc	100	100	\N	\N	NONE
+7	Nexus_5X_API_26	1	vnc	100	100	\N	\N	NONE
+8	Nexus_5X_API_26_RO	1	vnc	100	100	\N	\N	NONE
+9	Nexus_5X_API_23	1	vnc	100	100	\N	\N	NONE
+10	Nexus_5X_API_23_RO	1	vnc	100	100	\N	\N	NONE
+11	Nexus_5X_API_23	2	vnc	100	100	\N	\N	NONE
+12	Nexus_5X_API_23_RO	2	vnc	100	100	\N	\N	NONE
+13	Nexus_5X_API_24	2	vnc	100	100	\N	\N	NONE
+14	Nexus_5X_API_24_RO	2	vnc	100	100	\N	\N	NONE
+15	Nexus_5X_API_21	2	vnc	100	100	\N	\N	NONE
+16	Nexus_5X_API_21_RO	2	vnc	100	100	\N	\N	NONE
+17	Nexus_5X_API_22	2	vnc	100	100	\N	\N	NONE
+18	Nexus_5X_API_22_RO	2	vnc	100	100	\N	\N	NONE
+19	Nexus_5X_API_25	1	vnc	100	100	\N	\N	NONE
+20	Nexus_5X_API_25_RO	1	vnc	100	100	\N	\N	NONE
+\.
+
+
+--
+-- Name: guacamole_connection_connection_id_seq; Type: SEQUENCE SET; Schema: public; Owner: guac
+--
+
+SELECT pg_catalog.setval('guacamole_connection_connection_id_seq', 20, true);
+
+
+--
+-- Data for Name: guacamole_connection_group; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_connection_group (connection_group_id, parent_id, connection_group_name, type, max_connections, max_connections_per_user, enable_session_affinity) FROM stdin;
+1	\N	Android_Google_APIs	ORGANIZATIONAL	100	100	f
+2	\N	Android	ORGANIZATIONAL	100	100	f
+\.
+
+
+--
+-- Name: guacamole_connection_group_connection_group_id_seq; Type: SEQUENCE SET; Schema: public; Owner: guac
+--
+
+SELECT pg_catalog.setval('guacamole_connection_group_connection_group_id_seq', 2, true);
+
+
+--
+-- Data for Name: guacamole_connection_group_permission; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_connection_group_permission (user_id, connection_group_id, permission) FROM stdin;
+1	1	READ
+1	1	UPDATE
+1	1	DELETE
+1	1	ADMINISTER
+2	1	READ
+3	1	READ
+1	2	READ
+1	2	UPDATE
+1	2	DELETE
+1	2	ADMINISTER
+2	2	READ
+3	2	READ
+\.
+
+
+--
+-- Data for Name: guacamole_connection_history; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_connection_history (history_id, user_id, username, connection_id, connection_name, sharing_profile_id, sharing_profile_name, start_date, end_date) FROM stdin;
+1	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:21:18.94+00	2017-12-21 02:21:19.226+00
+2	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:21:20.916+00	2017-12-21 02:21:21.085+00
+3	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:21:36.257+00	2017-12-21 02:21:36.536+00
+4	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:21:51.93+00	2017-12-21 02:21:52.101+00
+5	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:22:18.925+00	2017-12-21 02:22:19.266+00
+6	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:22:34.637+00	2017-12-21 02:22:35.066+00
+7	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:22:50.343+00	2017-12-21 02:22:50.508+00
+8	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:23:06.152+00	2017-12-21 02:23:06.359+00
+9	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:23:22.164+00	2017-12-21 02:23:22.362+00
+10	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:23:38.16+00	2017-12-21 02:23:38.513+00
+11	1	guacadmin	1	Nexus_5_API_23	\N	\N	2017-12-21 02:27:47.099+00	2017-12-21 02:31:52.297+00
+12	1	guacadmin	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:26:36.109+00	2017-12-23 22:26:36.341+00
+13	1	guacadmin	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:26:51.558+00	2017-12-23 22:26:51.722+00
+14	1	guacadmin	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:27:06.955+00	2017-12-23 22:27:07.234+00
+15	1	guacadmin	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:27:22.406+00	2017-12-23 22:27:22.567+00
+16	1	guacadmin	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:27:38.269+00	2017-12-23 22:27:38.437+00
+17	2	apple	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:28:39.979+00	2017-12-23 22:28:40.209+00
+18	2	apple	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:28:41.871+00	2017-12-23 22:28:42.041+00
+19	2	apple	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:28:57.262+00	2017-12-23 22:28:57.436+00
+20	1	guacadmin	1	1-Nexus_5_google_apis_27	\N	\N	2017-12-23 22:30:52.979+00	2017-12-23 22:34:08.348+00
+21	2	apple	1	Nexus_5X_API_27	\N	\N	2017-12-23 22:39:44.679+00	2017-12-23 22:40:02.52+00
+22	2	apple	5	Nexus_5X_API_24	\N	\N	2017-12-23 23:27:26.637+00	2017-12-23 23:28:37.522+00
+23	2	apple	1	Nexus_5X_API_27	\N	\N	2017-12-23 23:27:27.104+00	2017-12-23 23:28:37.535+00
+24	2	apple	7	Nexus_5X_API_26	\N	\N	2017-12-24 00:20:21.78+00	2017-12-24 00:35:49.128+00
+25	2	apple	9	Nexus_5X_API_23	\N	\N	2017-12-24 00:20:19.048+00	2017-12-24 00:35:49.137+00
+26	2	apple	1	Nexus_5X_API_27	\N	\N	2017-12-24 00:20:22.152+00	2017-12-24 00:35:49.144+00
+27	2	apple	5	Nexus_5X_API_24	\N	\N	2017-12-24 00:20:21.357+00	2017-12-24 00:35:49.147+00
+28	2	apple	5	Nexus_5X_API_24	\N	\N	2017-12-24 17:23:49.248+00	2017-12-24 17:26:09.689+00
+29	2	apple	11	Nexus_5X_API_23	\N	\N	2017-12-24 17:23:27.092+00	2017-12-24 17:26:09.709+00
+30	2	apple	1	Nexus_5X_API_27	\N	\N	2017-12-24 17:23:51.31+00	2017-12-24 17:26:09.731+00
+31	2	apple	9	Nexus_5X_API_23	\N	\N	2017-12-24 17:23:47.795+00	2017-12-24 17:26:09.746+00
+32	2	apple	7	Nexus_5X_API_26	\N	\N	2017-12-24 17:23:50.487+00	2017-12-24 17:26:09.757+00
+\.
+
+
+--
+-- Name: guacamole_connection_history_history_id_seq; Type: SEQUENCE SET; Schema: public; Owner: guac
+--
+
+SELECT pg_catalog.setval('guacamole_connection_history_history_id_seq', 32, true);
+
+
+--
+-- Data for Name: guacamole_connection_parameter; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_connection_parameter (connection_id, parameter_name, parameter_value) FROM stdin;
+1	cursor	local
+1	clipboard-encoding	UTF-8
+1	password	password
+1	hostname	android_google_27
+1	color-depth	16
+1	port	5901
+4	cursor	local
+4	clipboard-encoding	UTF-8
+4	password	password
+4	hostname	android_google_27
+4	color-depth	16
+4	port	5901
+4	read-only	true
+5	cursor	local
+5	clipboard-encoding	UTF-8
+5	password	password
+5	hostname	android_google_24
+5	color-depth	16
+5	port	5901
+6	cursor	local
+6	clipboard-encoding	UTF-8
+6	password	password
+6	hostname	android_google_24
+6	color-depth	16
+6	port	5901
+6	read-only	true
+7	cursor	local
+7	clipboard-encoding	UTF-8
+7	password	password
+7	hostname	android_google_26
+7	color-depth	16
+7	port	5901
+8	cursor	local
+8	clipboard-encoding	UTF-8
+8	password	password
+8	hostname	android_google_26
+8	color-depth	16
+8	port	5901
+8	read-only	true
+9	cursor	local
+9	clipboard-encoding	UTF-8
+9	password	password
+9	hostname	android_google_23
+9	color-depth	16
+9	port	5901
+10	cursor	local
+10	clipboard-encoding	UTF-8
+10	password	password
+10	hostname	android_google_23
+10	color-depth	16
+10	port	5901
+10	read-only	true
+11	cursor	local
+11	clipboard-encoding	UTF-8
+11	password	password
+11	hostname	android_default_23
+11	color-depth	16
+11	port	5901
+12	cursor	local
+12	clipboard-encoding	UTF-8
+12	password	password
+12	hostname	android_default_23
+12	color-depth	16
+12	port	5901
+12	read-only	true
+13	cursor	local
+13	clipboard-encoding	UTF-8
+13	password	password
+13	hostname	android_default_24
+13	color-depth	16
+13	port	5901
+14	cursor	local
+14	clipboard-encoding	UTF-8
+14	password	password
+14	hostname	android_default_24
+14	color-depth	16
+14	port	5901
+14	read-only	true
+15	cursor	local
+15	clipboard-encoding	UTF-8
+15	password	password
+15	hostname	android_default_21
+15	color-depth	16
+15	port	5901
+16	cursor	local
+16	clipboard-encoding	UTF-8
+16	password	password
+16	hostname	android_default_21
+16	color-depth	16
+16	port	5901
+16	read-only	true
+17	cursor	local
+17	clipboard-encoding	UTF-8
+17	password	password
+17	hostname	android_default_22
+17	color-depth	16
+17	port	5901
+18	cursor	local
+18	clipboard-encoding	UTF-8
+18	password	password
+18	hostname	android_default_22
+18	color-depth	16
+18	port	5901
+18	read-only	true
+19	cursor	local
+19	clipboard-encoding	UTF-8
+19	password	password
+19	hostname	android_google_25
+19	color-depth	16
+19	port	5901
+20	cursor	local
+20	clipboard-encoding	UTF-8
+20	password	password
+20	hostname	android_google_25
+20	color-depth	16
+20	port	5901
+20	read-only	true
+\.
+
+
+--
+-- Data for Name: guacamole_connection_permission; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_connection_permission (user_id, connection_id, permission) FROM stdin;
+1	1	READ
+1	1	UPDATE
+1	1	DELETE
+1	1	ADMINISTER
+2	1	READ
+1	4	READ
+1	4	UPDATE
+1	4	DELETE
+1	4	ADMINISTER
+3	4	READ
+1	5	READ
+1	5	UPDATE
+1	5	DELETE
+1	5	ADMINISTER
+1	6	READ
+1	6	UPDATE
+1	6	DELETE
+1	6	ADMINISTER
+1	7	READ
+1	7	UPDATE
+1	7	DELETE
+1	7	ADMINISTER
+1	8	READ
+1	8	UPDATE
+1	8	DELETE
+1	8	ADMINISTER
+1	9	READ
+1	9	UPDATE
+1	9	DELETE
+1	9	ADMINISTER
+1	10	READ
+1	10	UPDATE
+1	10	DELETE
+1	10	ADMINISTER
+1	11	READ
+1	11	UPDATE
+1	11	DELETE
+1	11	ADMINISTER
+1	12	READ
+1	12	UPDATE
+1	12	DELETE
+1	12	ADMINISTER
+1	13	READ
+1	13	UPDATE
+1	13	DELETE
+1	13	ADMINISTER
+1	14	READ
+1	14	UPDATE
+1	14	DELETE
+1	14	ADMINISTER
+1	15	READ
+1	15	UPDATE
+1	15	DELETE
+1	15	ADMINISTER
+1	16	READ
+1	16	UPDATE
+1	16	DELETE
+1	16	ADMINISTER
+1	17	READ
+1	17	UPDATE
+1	17	DELETE
+1	17	ADMINISTER
+1	18	READ
+1	18	UPDATE
+1	18	DELETE
+1	18	ADMINISTER
+2	11	READ
+3	12	READ
+1	19	READ
+1	19	UPDATE
+1	19	DELETE
+1	19	ADMINISTER
+1	20	READ
+1	20	UPDATE
+1	20	DELETE
+1	20	ADMINISTER
+2	19	READ
+3	20	READ
+\.
+
+
+--
+-- Data for Name: guacamole_sharing_profile; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_sharing_profile (sharing_profile_id, sharing_profile_name, primary_connection_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: guacamole_sharing_profile_parameter; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_sharing_profile_parameter (sharing_profile_id, parameter_name, parameter_value) FROM stdin;
+\.
+
+
+--
+-- Data for Name: guacamole_sharing_profile_permission; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_sharing_profile_permission (user_id, sharing_profile_id, permission) FROM stdin;
+\.
+
+
+--
+-- Name: guacamole_sharing_profile_sharing_profile_id_seq; Type: SEQUENCE SET; Schema: public; Owner: guac
+--
+
+SELECT pg_catalog.setval('guacamole_sharing_profile_sharing_profile_id_seq', 1, true);
+
+
+--
+-- Data for Name: guacamole_system_permission; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_system_permission (user_id, permission) FROM stdin;
+1	ADMINISTER
+1	CREATE_USER
+1	CREATE_SHARING_PROFILE
+1	CREATE_CONNECTION_GROUP
+1	CREATE_CONNECTION
+2	CREATE_SHARING_PROFILE
+\.
+
+
+--
+-- Data for Name: guacamole_user; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_user (user_id, username, password_hash, password_salt, password_date, disabled, expired, access_window_start, access_window_end, valid_from, valid_until, timezone, full_name, email_address, organization, organizational_role) FROM stdin;
+1	guacadmin	\\xca458a7d494e3be824f5e1e175a1556c0f8eef2c2d7df3633bec4a29c4411960	\\xfe24adc5e11e2b25288d1704abe67a79e342ecc26064ce69c5b3177795a82264	2017-12-21 02:19:10.64207+00	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2	apple	\\x8828aa9f21730d7be552f616bffd1d5aa1d32446eac631b0421d17d88166bd5f	\\x9255348090939bf667610679f7741fe1a0b346cad611c5ff42e978661b0987e3	2017-12-21 02:36:40.284+00	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N
+3	readonly	\\x567e8388da162a785431f6f6e4209535f7af54c0b72fb81377f6f3e3641e1a92	\\x6c690026e935d3134005d5cd3180e4608b97529f0b0687c787057d68b7ad000b	2017-12-23 22:38:07.922+00	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N
+\.
+
+
+--
+-- Data for Name: guacamole_user_password_history; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_user_password_history (password_history_id, user_id, password_hash, password_salt, password_date) FROM stdin;
+\.
+
+
+--
+-- Name: guacamole_user_password_history_password_history_id_seq; Type: SEQUENCE SET; Schema: public; Owner: guac
+--
+
+SELECT pg_catalog.setval('guacamole_user_password_history_password_history_id_seq', 1, false);
+
+
+--
+-- Data for Name: guacamole_user_permission; Type: TABLE DATA; Schema: public; Owner: guac
+--
+
+COPY guacamole_user_permission (user_id, affected_user_id, permission) FROM stdin;
+1	1	READ
+1	1	UPDATE
+1	1	ADMINISTER
+1	2	READ
+1	2	UPDATE
+1	2	DELETE
+1	2	ADMINISTER
+2	2	READ
+1	3	READ
+1	3	UPDATE
+1	3	DELETE
+1	3	ADMINISTER
+3	3	READ
+\.
+
+
+--
+-- Name: guacamole_user_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: guac
+--
+
+SELECT pg_catalog.setval('guacamole_user_user_id_seq', 3, true);
+
+
+--
+-- Name: guacamole_connection_group connection_group_name_parent; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_group
+    ADD CONSTRAINT connection_group_name_parent UNIQUE (connection_group_name, parent_id);
+
+
+--
+-- Name: guacamole_connection connection_name_parent; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection
+    ADD CONSTRAINT connection_name_parent UNIQUE (connection_name, parent_id);
+
+
+--
+-- Name: guacamole_connection_group_permission guacamole_connection_group_permission_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_group_permission
+    ADD CONSTRAINT guacamole_connection_group_permission_pkey PRIMARY KEY (user_id, connection_group_id, permission);
+
+
+--
+-- Name: guacamole_connection_group guacamole_connection_group_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_group
+    ADD CONSTRAINT guacamole_connection_group_pkey PRIMARY KEY (connection_group_id);
+
+
+--
+-- Name: guacamole_connection_history guacamole_connection_history_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_history
+    ADD CONSTRAINT guacamole_connection_history_pkey PRIMARY KEY (history_id);
+
+
+--
+-- Name: guacamole_connection_parameter guacamole_connection_parameter_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_parameter
+    ADD CONSTRAINT guacamole_connection_parameter_pkey PRIMARY KEY (connection_id, parameter_name);
+
+
+--
+-- Name: guacamole_connection_permission guacamole_connection_permission_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_permission
+    ADD CONSTRAINT guacamole_connection_permission_pkey PRIMARY KEY (user_id, connection_id, permission);
+
+
+--
+-- Name: guacamole_connection guacamole_connection_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection
+    ADD CONSTRAINT guacamole_connection_pkey PRIMARY KEY (connection_id);
+
+
+--
+-- Name: guacamole_sharing_profile_parameter guacamole_sharing_profile_parameter_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile_parameter
+    ADD CONSTRAINT guacamole_sharing_profile_parameter_pkey PRIMARY KEY (sharing_profile_id, parameter_name);
+
+
+--
+-- Name: guacamole_sharing_profile_permission guacamole_sharing_profile_permission_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile_permission
+    ADD CONSTRAINT guacamole_sharing_profile_permission_pkey PRIMARY KEY (user_id, sharing_profile_id, permission);
+
+
+--
+-- Name: guacamole_sharing_profile guacamole_sharing_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile
+    ADD CONSTRAINT guacamole_sharing_profile_pkey PRIMARY KEY (sharing_profile_id);
+
+
+--
+-- Name: guacamole_system_permission guacamole_system_permission_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_system_permission
+    ADD CONSTRAINT guacamole_system_permission_pkey PRIMARY KEY (user_id, permission);
+
+
+--
+-- Name: guacamole_user_password_history guacamole_user_password_history_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user_password_history
+    ADD CONSTRAINT guacamole_user_password_history_pkey PRIMARY KEY (password_history_id);
+
+
+--
+-- Name: guacamole_user_permission guacamole_user_permission_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user_permission
+    ADD CONSTRAINT guacamole_user_permission_pkey PRIMARY KEY (user_id, affected_user_id, permission);
+
+
+--
+-- Name: guacamole_user guacamole_user_pkey; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user
+    ADD CONSTRAINT guacamole_user_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: guacamole_sharing_profile sharing_profile_name_primary; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile
+    ADD CONSTRAINT sharing_profile_name_primary UNIQUE (sharing_profile_name, primary_connection_id);
+
+
+--
+-- Name: guacamole_user username; Type: CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user
+    ADD CONSTRAINT username UNIQUE (username);
+
+
+--
+-- Name: guacamole_connection_group_parent_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_group_parent_id_idx ON guacamole_connection_group USING btree (parent_id);
+
+
+--
+-- Name: guacamole_connection_group_permission_connection_group_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_group_permission_connection_group_id_idx ON guacamole_connection_group_permission USING btree (connection_group_id);
+
+
+--
+-- Name: guacamole_connection_group_permission_user_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_group_permission_user_id_idx ON guacamole_connection_group_permission USING btree (user_id);
+
+
+--
+-- Name: guacamole_connection_history_connection_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_history_connection_id_idx ON guacamole_connection_history USING btree (connection_id);
+
+
+--
+-- Name: guacamole_connection_history_end_date_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_history_end_date_idx ON guacamole_connection_history USING btree (end_date);
+
+
+--
+-- Name: guacamole_connection_history_sharing_profile_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_history_sharing_profile_id_idx ON guacamole_connection_history USING btree (sharing_profile_id);
+
+
+--
+-- Name: guacamole_connection_history_start_date_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_history_start_date_idx ON guacamole_connection_history USING btree (start_date);
+
+
+--
+-- Name: guacamole_connection_history_user_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_history_user_id_idx ON guacamole_connection_history USING btree (user_id);
+
+
+--
+-- Name: guacamole_connection_parameter_connection_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_parameter_connection_id_idx ON guacamole_connection_parameter USING btree (connection_id);
+
+
+--
+-- Name: guacamole_connection_parent_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_parent_id_idx ON guacamole_connection USING btree (parent_id);
+
+
+--
+-- Name: guacamole_connection_permission_connection_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_permission_connection_id_idx ON guacamole_connection_permission USING btree (connection_id);
+
+
+--
+-- Name: guacamole_connection_permission_user_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_connection_permission_user_id_idx ON guacamole_connection_permission USING btree (user_id);
+
+
+--
+-- Name: guacamole_sharing_profile_parameter_sharing_profile_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_sharing_profile_parameter_sharing_profile_id_idx ON guacamole_sharing_profile_parameter USING btree (sharing_profile_id);
+
+
+--
+-- Name: guacamole_sharing_profile_permission_sharing_profile_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_sharing_profile_permission_sharing_profile_id_idx ON guacamole_sharing_profile_permission USING btree (sharing_profile_id);
+
+
+--
+-- Name: guacamole_sharing_profile_permission_user_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_sharing_profile_permission_user_id_idx ON guacamole_sharing_profile_permission USING btree (user_id);
+
+
+--
+-- Name: guacamole_sharing_profile_primary_connection_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_sharing_profile_primary_connection_id_idx ON guacamole_sharing_profile USING btree (primary_connection_id);
+
+
+--
+-- Name: guacamole_system_permission_user_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_system_permission_user_id_idx ON guacamole_system_permission USING btree (user_id);
+
+
+--
+-- Name: guacamole_user_password_history_user_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_user_password_history_user_id_idx ON guacamole_user_password_history USING btree (user_id);
+
+
+--
+-- Name: guacamole_user_permission_affected_user_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_user_permission_affected_user_id_idx ON guacamole_user_permission USING btree (affected_user_id);
+
+
+--
+-- Name: guacamole_user_permission_user_id_idx; Type: INDEX; Schema: public; Owner: guac
+--
+
+CREATE INDEX guacamole_user_permission_user_id_idx ON guacamole_user_permission USING btree (user_id);
+
+
+--
+-- Name: guacamole_connection_group guacamole_connection_group_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_group
+    ADD CONSTRAINT guacamole_connection_group_ibfk_1 FOREIGN KEY (parent_id) REFERENCES guacamole_connection_group(connection_group_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_connection_group_permission guacamole_connection_group_permission_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_group_permission
+    ADD CONSTRAINT guacamole_connection_group_permission_ibfk_1 FOREIGN KEY (connection_group_id) REFERENCES guacamole_connection_group(connection_group_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_connection_group_permission guacamole_connection_group_permission_ibfk_2; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_group_permission
+    ADD CONSTRAINT guacamole_connection_group_permission_ibfk_2 FOREIGN KEY (user_id) REFERENCES guacamole_user(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_connection_history guacamole_connection_history_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_history
+    ADD CONSTRAINT guacamole_connection_history_ibfk_1 FOREIGN KEY (user_id) REFERENCES guacamole_user(user_id) ON DELETE SET NULL;
+
+
+--
+-- Name: guacamole_connection_history guacamole_connection_history_ibfk_2; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_history
+    ADD CONSTRAINT guacamole_connection_history_ibfk_2 FOREIGN KEY (connection_id) REFERENCES guacamole_connection(connection_id) ON DELETE SET NULL;
+
+
+--
+-- Name: guacamole_connection_history guacamole_connection_history_ibfk_3; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_history
+    ADD CONSTRAINT guacamole_connection_history_ibfk_3 FOREIGN KEY (sharing_profile_id) REFERENCES guacamole_sharing_profile(sharing_profile_id) ON DELETE SET NULL;
+
+
+--
+-- Name: guacamole_connection guacamole_connection_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection
+    ADD CONSTRAINT guacamole_connection_ibfk_1 FOREIGN KEY (parent_id) REFERENCES guacamole_connection_group(connection_group_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_connection_parameter guacamole_connection_parameter_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_parameter
+    ADD CONSTRAINT guacamole_connection_parameter_ibfk_1 FOREIGN KEY (connection_id) REFERENCES guacamole_connection(connection_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_connection_permission guacamole_connection_permission_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_permission
+    ADD CONSTRAINT guacamole_connection_permission_ibfk_1 FOREIGN KEY (connection_id) REFERENCES guacamole_connection(connection_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_connection_permission guacamole_connection_permission_ibfk_2; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_connection_permission
+    ADD CONSTRAINT guacamole_connection_permission_ibfk_2 FOREIGN KEY (user_id) REFERENCES guacamole_user(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_sharing_profile guacamole_sharing_profile_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile
+    ADD CONSTRAINT guacamole_sharing_profile_ibfk_1 FOREIGN KEY (primary_connection_id) REFERENCES guacamole_connection(connection_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_sharing_profile_parameter guacamole_sharing_profile_parameter_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile_parameter
+    ADD CONSTRAINT guacamole_sharing_profile_parameter_ibfk_1 FOREIGN KEY (sharing_profile_id) REFERENCES guacamole_sharing_profile(sharing_profile_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_sharing_profile_permission guacamole_sharing_profile_permission_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile_permission
+    ADD CONSTRAINT guacamole_sharing_profile_permission_ibfk_1 FOREIGN KEY (sharing_profile_id) REFERENCES guacamole_sharing_profile(sharing_profile_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_sharing_profile_permission guacamole_sharing_profile_permission_ibfk_2; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_sharing_profile_permission
+    ADD CONSTRAINT guacamole_sharing_profile_permission_ibfk_2 FOREIGN KEY (user_id) REFERENCES guacamole_user(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_system_permission guacamole_system_permission_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_system_permission
+    ADD CONSTRAINT guacamole_system_permission_ibfk_1 FOREIGN KEY (user_id) REFERENCES guacamole_user(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_user_password_history guacamole_user_password_history_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user_password_history
+    ADD CONSTRAINT guacamole_user_password_history_ibfk_1 FOREIGN KEY (user_id) REFERENCES guacamole_user(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_user_permission guacamole_user_permission_ibfk_1; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user_permission
+    ADD CONSTRAINT guacamole_user_permission_ibfk_1 FOREIGN KEY (affected_user_id) REFERENCES guacamole_user(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: guacamole_user_permission guacamole_user_permission_ibfk_2; Type: FK CONSTRAINT; Schema: public; Owner: guac
+--
+
+ALTER TABLE ONLY guacamole_user_permission
+    ADD CONSTRAINT guacamole_user_permission_ibfk_2 FOREIGN KEY (user_id) REFERENCES guacamole_user(user_id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
