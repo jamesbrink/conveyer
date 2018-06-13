@@ -1,0 +1,4 @@
+xsetroot -solid gray
+xmodmap -e "keysym Super_L = Multi_key"
+xset s off; xset dpms 0 1800 0
+exec /usr/local/bin/jwm -f /home/android/.jwmrc
