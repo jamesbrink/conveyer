@@ -32,7 +32,7 @@ ARG BUILD_DATE
 ARG DEVICE_NAME="Nexus 5X"
 ARG DEVICE_MODEL=Nexus_5X
 ARG ARCH=x86
-ARG IMAGE_TYPE=default
+ARG IMAGE_TYPE=google_apis
 ARG API=23
 
 # Labels / Metadata.

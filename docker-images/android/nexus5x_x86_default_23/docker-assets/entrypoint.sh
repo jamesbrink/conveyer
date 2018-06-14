@@ -15,7 +15,7 @@ rm -f /tmp/.X*-lock
 rm -rf /tmp/.X11-unix
 vncserver -desktop Android -alwaysshared
 jwm &
-emulator @Nexus_5X_API_23 &
+emulator @Nexus_5X_API_23
 
 IP=`hostname -i`
 socat tcp-listen:5554,bind=$IP,fork tcp:127.0.0.1:5554 &
