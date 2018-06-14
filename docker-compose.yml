@@ -44,26 +44,12 @@ services:
         aliases:
           - guacamole
   android_23:
-    image: jamesbrink/android:x86_default_23
+    image: conveyer/android:nexus5x_x86_default_23
     privileged: true
     networks:
       internal:
         aliases:
           - android_default_23
-  android_25:
-    image: jamesbrink/android:x86_google_apis_25
-    privileged: true
-    networks:
-      internal:
-        aliases:
-          - android_google_25
-  android_27:
-    image: jamesbrink/android:x86_google_apis_27
-    privileged: true
-    networks:
-      internal:
-        aliases:
-          - android_google_27
   appium:
     image: appium/appium
     privileged: true
@@ -73,17 +59,6 @@ services:
       internal:
         aliases:
           - appium
-  jenkins:
-    image: jenkins/jenkins:lts
-    ports:
-      - "8081:8080"
-      - "50000:50000"
-    volumes:
-      - jenkins:/var/jenkins_home
-    networks:
-      internal:
-        aliases:
-          - jenkins
   gitlab:
     image: gitlab/gitlab-ce:latest
     hostname: gitlab
@@ -119,8 +94,6 @@ volumes:
   postgres_logs:
     driver: local
   postgres_backups:
-    driver: local
-  jenkins:
     driver: local
   gitlab_config:
     driver: local
