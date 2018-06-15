@@ -1,6 +1,11 @@
-# conveyer
+# Conveyer
 
-The following altertions need to be made to the gitlab runnuer's
+# About
+
+Early stage/experimental turnkey build & CI/CD pipeline.
+
+## Misc notes
+The following alterations need to be made to the Gitlab runners
 
 `/etc/gitlab-runner/config.toml`
 
@@ -12,7 +17,7 @@ check_interval = 0
 
 [[runners]]
   name = "react_native_runner"
-  url = "https://wip-access-hub.com/gitlab/"
+  url = "https://urandom.io/gitlab/"
   token = "84116b9cf7a597139aac46df3181ef"
   executor = "docker"
   [runners.docker]
