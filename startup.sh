@@ -15,8 +15,6 @@ sleep 30
 PGPASSWORD=guac psql -h 127.0.0.1  -U guac < initdb.sql.working.3
 sleep 30
 # Connect Appium to emulators
-docker exec buildserver_appium_1 /root/platform-tools/adb connect android_23
-docker exec buildserver_appium_1 /root/platform-tools/adb connect android_25
-docker exec buildserver_appium_1 /root/platform-tools/adb connect android_27
+docker exec conveyer_appium_1 /root/platform-tools/adb connect android_23
 # Install packages
 #./connect_adb.sh
