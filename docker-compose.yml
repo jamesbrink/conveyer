@@ -22,7 +22,7 @@ services:
         aliases:
           - postgres
   guacd:
-    image: guacamole/guacd
+    image: guacamole/guacd:0.9.13-incubating
     ports:
      - "4822:4822"
     networks:
@@ -30,7 +30,7 @@ services:
         aliases:
           - guacd
   guacamole:
-    image: guacamole/guacamole
+    image: guacamole/guacamole:0.9.13-incubating
     ports:
      - "8080:8080"
     environment:

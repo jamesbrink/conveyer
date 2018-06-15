@@ -12,7 +12,7 @@ docker-compose pull
 docker-compose build
 docker-compose up &
 sleep 30
-PGPASSWORD=guac psql -h 127.0.0.1  -U guac < initdb.sql.working.3
+PGPASSWORD=guac psql -h 127.0.0.1  -U guac < initdb.sql.bootstrap
 sleep 30
 # Connect Appium to emulators
 docker exec conveyer_appium_1 /root/platform-tools/adb connect android_23
